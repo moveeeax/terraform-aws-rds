@@ -73,10 +73,39 @@ variable "db_subnet_group_name" {
   default     = null
 }
 
-variable "skip_final_snapshot" {
-  description = "Whether to skip taking a final snapshot when the instance is destroyed."
+variable "publicly_accessible" {
+  description = "Whether the instance gets a public IP and a publicly resolvable DNS name. Keep this false unless the database genuinely has to be reachable from the internet."
+  type        = bool
+  default     = false
+}
+
+variable "backup_retention_period" {
+  description = "Number of days to retain automated backups. Zero disables automated backups and also disables point-in-time recovery."
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.backup_retention_period >= 0 && var.backup_retention_period <= 35 && floor(var.backup_retention_period) == var.backup_retention_period
+    error_message = "backup_retention_period must be a whole number between 0 and 35."
+  }
+}
+
+variable "deletion_protection" {
+  description = "Whether to protect the instance from being deleted. Set this to false before a deliberate teardown."
   type        = bool
   default     = true
+}
+
+variable "skip_final_snapshot" {
+  description = "Whether to skip taking a final snapshot when the instance is destroyed. Skipping it means the data is gone for good."
+  type        = bool
+  default     = false
+}
+
+variable "final_snapshot_identifier" {
+  description = "Name of the final snapshot taken on destroy. Null derives \"<identifier>-final\". Ignored when skip_final_snapshot is true."
+  type        = string
+  default     = null
 }
 
 variable "tags" {

@@ -14,8 +14,18 @@ resource "aws_db_instance" "this" {
 
   vpc_security_group_ids = var.vpc_security_group_ids
   db_subnet_group_name   = var.db_subnet_group_name
+  publicly_accessible    = var.publicly_accessible
+
+  backup_retention_period = var.backup_retention_period
+  deletion_protection     = var.deletion_protection
 
   skip_final_snapshot = var.skip_final_snapshot
+
+  # AWS rejects the destroy unless a name is supplied for the final snapshot, so
+  # derive one from the identifier when the caller has not chosen one. It must
+  # stay null while skip_final_snapshot is true or the provider reports a
+  # conflict between the two arguments.
+  final_snapshot_identifier = var.skip_final_snapshot ? null : coalesce(var.final_snapshot_identifier, "${var.identifier}-final")
 
   tags = var.tags
 }
