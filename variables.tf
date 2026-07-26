@@ -1,6 +1,11 @@
 variable "identifier" {
-  description = "Unique identifier for the DB instance."
+  description = "Unique identifier for the DB instance. Must start with a letter, contain only letters, numbers, and hyphens, not end with a hyphen, and not contain two consecutive hyphens."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z][a-zA-Z0-9-]{0,62}$", var.identifier)) && !can(regex("--", var.identifier)) && !endswith(var.identifier, "-")
+    error_message = "identifier must be 1-63 characters, start with a letter, contain only letters, numbers, and hyphens, not end with a hyphen, and not contain two consecutive hyphens."
+  }
 }
 
 variable "engine" {
@@ -106,10 +111,29 @@ variable "final_snapshot_identifier" {
   description = "Name of the final snapshot taken on destroy. Null derives \"<identifier>-final\". Ignored when skip_final_snapshot is true."
   type        = string
   default     = null
+
+  validation {
+    condition = var.final_snapshot_identifier == null ? true : (
+      can(regex("^[a-zA-Z][a-zA-Z0-9-]{0,254}$", var.final_snapshot_identifier)) &&
+      !can(regex("--", var.final_snapshot_identifier)) &&
+      !endswith(var.final_snapshot_identifier, "-")
+    )
+    error_message = "final_snapshot_identifier must be 1-255 characters, start with a letter, contain only letters, numbers, and hyphens, not end with a hyphen, and not contain two consecutive hyphens."
+  }
 }
 
 variable "tags" {
   description = "Tags applied to the DB instance."
   type        = map(string)
   default     = {}
+}
+
+variable "timeouts" {
+  description = "Per-operation timeouts for the underlying RDS API calls. Null for any key leaves the AWS provider's own default for that operation (create 40m, update 80m, delete 60m), which is too short for some multi-AZ or large-storage instances."
+  type = object({
+    create = optional(string)
+    update = optional(string)
+    delete = optional(string)
+  })
+  default = null
 }

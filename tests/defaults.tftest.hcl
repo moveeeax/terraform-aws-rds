@@ -126,3 +126,164 @@ run "rejects_allocated_storage_below_the_aws_minimum" {
 
   expect_failures = [var.allocated_storage]
 }
+
+run "rejects_identifier_starting_with_a_digit" {
+  command = plan
+
+  variables {
+    identifier = "1-test-db"
+  }
+
+  expect_failures = [var.identifier]
+}
+
+run "rejects_identifier_with_a_trailing_hyphen" {
+  command = plan
+
+  variables {
+    identifier = "test-db-"
+  }
+
+  expect_failures = [var.identifier]
+}
+
+run "rejects_identifier_with_consecutive_hyphens" {
+  command = plan
+
+  variables {
+    identifier = "test--db"
+  }
+
+  expect_failures = [var.identifier]
+}
+
+run "rejects_empty_final_snapshot_identifier" {
+  command = plan
+
+  variables {
+    final_snapshot_identifier = ""
+  }
+
+  expect_failures = [var.final_snapshot_identifier]
+}
+
+run "rejects_final_snapshot_identifier_with_a_trailing_hyphen" {
+  command = plan
+
+  variables {
+    final_snapshot_identifier = "decommission-"
+  }
+
+  expect_failures = [var.final_snapshot_identifier]
+}
+
+run "multiple_optional_flags_together_do_not_interfere_with_each_other" {
+  command = plan
+
+  variables {
+    multi_az                = true
+    publicly_accessible     = true
+    engine_version          = "16.4"
+    vpc_security_group_ids  = ["sg-aaaaaaaa", "sg-bbbbbbbb"]
+    db_subnet_group_name    = "custom-subnet-group"
+    backup_retention_period = 14
+
+    timeouts = {
+      create = "60m"
+      update = "90m"
+      delete = "30m"
+    }
+  }
+
+  assert {
+    condition     = aws_db_instance.this.multi_az == true
+    error_message = "multi_az must remain settable alongside other optional flags."
+  }
+
+  assert {
+    condition     = aws_db_instance.this.publicly_accessible == true
+    error_message = "publicly_accessible must remain settable alongside other optional flags."
+  }
+
+  assert {
+    condition     = aws_db_instance.this.engine_version == "16.4"
+    error_message = "engine_version must remain settable alongside other optional flags."
+  }
+
+  assert {
+    condition     = length(aws_db_instance.this.vpc_security_group_ids) == 2
+    error_message = "vpc_security_group_ids must remain settable alongside other optional flags."
+  }
+
+  assert {
+    condition     = aws_db_instance.this.db_subnet_group_name == "custom-subnet-group"
+    error_message = "db_subnet_group_name must remain settable alongside other optional flags."
+  }
+
+  assert {
+    condition     = aws_db_instance.this.backup_retention_period == 14
+    error_message = "backup_retention_period must remain settable alongside other optional flags."
+  }
+}
+
+run "timeouts_default_to_unset" {
+  command = plan
+
+  assert {
+    condition     = aws_db_instance.this.timeouts == null
+    error_message = "No timeouts block should be generated when var.timeouts is left at its default null."
+  }
+}
+
+run "timeouts_are_applied_when_set" {
+  command = plan
+
+  variables {
+    timeouts = {
+      create = "60m"
+      update = "90m"
+      delete = "30m"
+    }
+  }
+
+  assert {
+    condition     = aws_db_instance.this.timeouts.create == "60m"
+    error_message = "A supplied create timeout must reach the resource."
+  }
+
+  assert {
+    condition     = aws_db_instance.this.timeouts.update == "90m"
+    error_message = "A supplied update timeout must reach the resource."
+  }
+
+  assert {
+    condition     = aws_db_instance.this.timeouts.delete == "30m"
+    error_message = "A supplied delete timeout must reach the resource."
+  }
+}
+
+run "create_instance_with_initial_instance_class" {
+  command = apply
+
+  variables {
+    instance_class = "db.t3.micro"
+  }
+
+  assert {
+    condition     = aws_db_instance.this.instance_class == "db.t3.micro"
+    error_message = "The instance must be created with the requested instance class."
+  }
+}
+
+run "update_instance_class_in_place" {
+  command = apply
+
+  variables {
+    instance_class = "db.t4g.small"
+  }
+
+  assert {
+    condition     = aws_db_instance.this.instance_class == "db.t4g.small"
+    error_message = "Changing instance_class on an existing instance must update it in place rather than requiring a new one."
+  }
+}
