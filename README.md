@@ -43,7 +43,7 @@ A runnable example lives in [`examples/basic`](examples/basic).
 
 | Name                     | Description                                             | Type           | Default          | Required |
 |--------------------------|---------------------------------------------------------|----------------|------------------|:--------:|
-| `identifier`             | Unique identifier for the DB instance.                  | `string`       | n/a              |   yes    |
+| `identifier`             | Unique identifier for the DB instance. Must start with a letter and contain only letters, numbers, and single hyphens. | `string` | n/a | yes |
 | `engine`                 | Database engine to use.                                 | `string`       | `"postgres"`     |    no    |
 | `engine_version`         | Engine version to run.                                  | `string`       | `null`           |    no    |
 | `instance_class`         | Instance class for the DB instance.                     | `string`       | `"db.t3.micro"`  |    no    |
@@ -61,6 +61,7 @@ A runnable example lives in [`examples/basic`](examples/basic).
 | `skip_final_snapshot`    | Skip the final snapshot on destroy.                     | `bool`         | `false`          |    no    |
 | `final_snapshot_identifier` | Name of the final snapshot. `null` derives `<identifier>-final`. | `string` | `null`     |    no    |
 | `tags`                   | Tags applied to the DB instance.                        | `map(string)`  | `{}`             |    no    |
+| `timeouts`               | Per-operation timeouts (`create`/`update`/`delete`) for the RDS API calls. `null` for a key keeps the AWS provider's own default. | `object({...})` | `null` |    no    |
 
 ## Outputs
 
@@ -84,6 +85,28 @@ one on purpose:
    `final_snapshot_identifier`). Setting `skip_final_snapshot = true` throws the
    data away.
 3. `terraform destroy`.
+
+## Long-running operations
+
+The AWS provider's default timeouts (40 minutes to create, 80 to update, 60
+to destroy) are sometimes too short for large multi-AZ instances or storage
+resizes. Override any of them with `timeouts`:
+
+```hcl
+module "rds" {
+  source = "github.com/moveeeax/terraform-aws-rds"
+
+  # ...
+
+  timeouts = {
+    create = "60m"
+    update = "90m"
+  }
+}
+```
+
+A key left out (or the whole variable left `null`) keeps the provider's own
+default for that operation.
 
 ## Development
 
