@@ -22,3 +22,8 @@ output "port" {
   description = "Port the DB instance listens on."
   value       = aws_db_instance.this.port
 }
+
+output "master_user_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the master password when manage_master_user_password is enabled, otherwise null."
+  value       = try(aws_db_instance.this.master_user_secret[0].secret_arn, null)
+}
