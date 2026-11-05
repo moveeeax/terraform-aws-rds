@@ -7,7 +7,12 @@ resource "aws_db_instance" "this" {
 
   db_name  = var.db_name
   username = var.username
-  password = var.password
+  password = var.manage_master_user_password ? null : var.password
+
+  # With manage_master_user_password RDS generates the password and keeps it in
+  # Secrets Manager, so it never appears in the plan or state.
+  manage_master_user_password   = var.manage_master_user_password ? true : null
+  master_user_secret_kms_key_id = var.manage_master_user_password ? var.master_user_secret_kms_key_id : null
 
   multi_az          = var.multi_az
   storage_encrypted = var.storage_encrypted
@@ -28,6 +33,13 @@ resource "aws_db_instance" "this" {
   final_snapshot_identifier = var.skip_final_snapshot ? null : coalesce(var.final_snapshot_identifier, "${var.identifier}-final")
 
   tags = var.tags
+
+  lifecycle {
+    precondition {
+      condition     = var.manage_master_user_password != (var.password != null)
+      error_message = "Set exactly one of password or manage_master_user_password = true. Prefer manage_master_user_password so the master password stays out of Terraform state."
+    }
+  }
 
   dynamic "timeouts" {
     for_each = var.timeouts == null ? [] : [var.timeouts]

@@ -14,7 +14,7 @@ variable you can turn off deliberately — see
 
 ```hcl
 module "rds" {
-  source = "github.com/moveeeax/terraform-aws-rds"
+  source = "github.com/moveeeax/terraform-aws-rds?ref=v1.0.0" # pin to a release tag
 
   identifier = "prod-postgres"
   engine     = "postgres"
@@ -31,6 +31,18 @@ module "rds" {
 ```
 
 A runnable example lives in [`examples/basic`](examples/basic).
+
+### Keeping the master password out of state
+
+A `password` you pass in is stored in Terraform state. To avoid that, leave
+`password` unset and let RDS generate the password and keep it in AWS Secrets
+Manager; the secret's ARN is exported as `master_user_secret_arn`:
+
+```hcl
+  username                    = "appadmin"
+  manage_master_user_password = true
+  # master_user_secret_kms_key_id = aws_kms_key.db.arn  # optional, defaults to aws/secretsmanager
+```
 
 ## Requirements
 
@@ -50,7 +62,9 @@ A runnable example lives in [`examples/basic`](examples/basic).
 | `allocated_storage`      | Allocated storage in gibibytes.                         | `number`       | `20`             |    no    |
 | `db_name`                | Name of the initial database to create.                 | `string`       | `null`           |    no    |
 | `username`               | Master username for the DB instance.                    | `string`       | n/a              |   yes    |
-| `password`               | Master password for the DB instance.                    | `string`       | n/a              |   yes    |
+| `password`               | Master password for the DB instance. Ends up in Terraform state; set exactly one of this or `manage_master_user_password`. | `string` | `null` | no |
+| `manage_master_user_password` | Let RDS generate the master password and keep it in Secrets Manager, out of Terraform state. | `bool` | `false` | no |
+| `master_user_secret_kms_key_id` | KMS key for the managed master user secret. `null` uses `aws/secretsmanager`. | `string` | `null` | no |
 | `multi_az`               | Deploy the instance across multiple AZs.                | `bool`         | `false`          |    no    |
 | `storage_encrypted`      | Encrypt the underlying storage.                         | `bool`         | `true`           |    no    |
 | `vpc_security_group_ids` | VPC security group IDs to associate.                    | `list(string)` | `[]`             |    no    |
@@ -72,6 +86,7 @@ A runnable example lives in [`examples/basic`](examples/basic).
 | `endpoint` | Connection endpoint in address:port form.              |
 | `address`  | Hostname of the DB instance.                           |
 | `port`     | Port the DB instance listens on.                       |
+| `master_user_secret_arn` | ARN of the Secrets Manager secret with the master password when `manage_master_user_password` is enabled, otherwise `null`. |
 
 ## Tearing an instance down
 

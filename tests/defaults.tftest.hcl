@@ -287,3 +287,43 @@ run "update_instance_class_in_place" {
     error_message = "Changing instance_class on an existing instance must update it in place rather than requiring a new one."
   }
 }
+
+run "managed_master_password_keeps_secret_out_of_state" {
+  command = plan
+
+  variables {
+    password                    = null
+    manage_master_user_password = true
+  }
+
+  assert {
+    condition     = aws_db_instance.this.manage_master_user_password == true
+    error_message = "manage_master_user_password must be passed to the instance."
+  }
+
+  assert {
+    condition     = aws_db_instance.this.password == null
+    error_message = "No password may be sent when RDS manages the master password."
+  }
+}
+
+run "password_and_managed_password_are_mutually_exclusive" {
+  command = plan
+
+  variables {
+    manage_master_user_password = true
+  }
+
+  expect_failures = [aws_db_instance.this]
+}
+
+run "a_password_source_is_required" {
+  command = plan
+
+  variables {
+    password = null
+  }
+
+  expect_failures = [aws_db_instance.this]
+}
+

@@ -49,9 +49,22 @@ variable "username" {
 }
 
 variable "password" {
-  description = "Master password for the DB instance."
+  description = "Master password for the DB instance. Stored in Terraform state; leave null and set manage_master_user_password = true to keep it out of state."
   type        = string
+  default     = null
   sensitive   = true
+}
+
+variable "manage_master_user_password" {
+  description = "Let RDS generate the master password and manage it in AWS Secrets Manager. Mutually exclusive with password."
+  type        = bool
+  default     = false
+}
+
+variable "master_user_secret_kms_key_id" {
+  description = "KMS key ID, ARN or alias used to encrypt the managed master user secret. null uses the aws/secretsmanager key. Only used with manage_master_user_password."
+  type        = string
+  default     = null
 }
 
 variable "multi_az" {
