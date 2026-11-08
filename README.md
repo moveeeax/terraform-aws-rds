@@ -44,6 +44,14 @@ Manager; the secret's ARN is exported as `master_user_secret_arn`:
   # master_user_secret_kms_key_id = aws_kms_key.db.arn  # optional, defaults to aws/secretsmanager
 ```
 
+`manage_master_user_password` defaults to `false`, so upgrading the module does
+not touch an instance that already uses `password`. It is the recommended
+setting for new instances. Switching an existing instance over is a deliberate
+change: on apply RDS replaces the current master password with a generated one
+stored in the secret, and anything still connecting with the old password
+starts failing. Point the applications at the secret (or rotate them in the
+same change window) before you apply it.
+
 ## Requirements
 
 | Name      | Version  |

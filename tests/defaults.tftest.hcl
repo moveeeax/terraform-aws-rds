@@ -327,3 +327,32 @@ run "a_password_source_is_required" {
   expect_failures = [aws_db_instance.this]
 }
 
+
+run "existing_password_deployments_plan_unchanged" {
+  command = plan
+
+  assert {
+    condition     = aws_db_instance.this.password == "not-a-real-password"
+    error_message = "With the default manage_master_user_password = false the caller's password must still reach the instance."
+  }
+
+  assert {
+    condition     = aws_db_instance.this.manage_master_user_password == null
+    error_message = "manage_master_user_password must stay unset by default; turning it on rotates the master password of an existing instance."
+  }
+}
+
+run "managed_master_password_with_a_customer_kms_key" {
+  command = plan
+
+  variables {
+    password                      = null
+    manage_master_user_password   = true
+    master_user_secret_kms_key_id = "arn:aws:kms:us-east-1:111122223333:key/a1b2c3d4-5678-90ab-cdef-EXAMPLE11111"
+  }
+
+  assert {
+    condition     = aws_db_instance.this.master_user_secret_kms_key_id == "arn:aws:kms:us-east-1:111122223333:key/a1b2c3d4-5678-90ab-cdef-EXAMPLE11111"
+    error_message = "master_user_secret_kms_key_id must reach the instance when RDS manages the master password."
+  }
+}
