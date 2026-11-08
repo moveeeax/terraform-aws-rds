@@ -6,6 +6,8 @@ All notable changes to this module are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-08
+
 ### Changed
 
 - Docs: warn that switching an existing instance to
@@ -35,6 +37,7 @@ All notable changes to this module are documented here. The format follows
 
 Initial release (`v0.1.0` points at the same commit).
 
-[Unreleased]: https://github.com/moveeeax/terraform-aws-rds/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/moveeeax/terraform-aws-rds/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/moveeeax/terraform-aws-rds/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/moveeeax/terraform-aws-rds/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/moveeeax/terraform-aws-rds/releases/tag/v1.0.0
